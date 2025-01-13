@@ -1,0 +1,12 @@
+{
+    "f0up_key": 0,
+    "index_path": null,
+    "f0method": "rmvpe",
+    "model_name": "my-voice-model.pth",
+    "index_rate": 0,
+    "device": "cuda:0",
+    "is_half": true,
+    "filter_radius": 7,
+    "rms_mix_rate": 0,
+    "protect": 0.5
+}
