@@ -19,7 +19,7 @@ The model needs to be in this projects `models` directory. Please put the folder
 1. Ensure you have CUDA setup properly
 2. Create and activate the virtual environment. Replace the `pytorch-cuda` version with the latest version before the version stated on your CUDA (found using command `nvidia-smi`). For example, I'm using `CUDA 12.6`, but the latest `pytorch-cuda` is for `CUDA 12.4`, so use `pytorch-cuda==12.4`
 ```
-conda create -n jaison-comp-ttsc-rvc-project python=3.10 pytorch-cuda=12.4 pytorch cudatoolkit -c pytorch -c nvidia -y
+conda create -n jaison-comp-ttsc-rvc-project python=3.10 pytorch-cuda=12.4 pytorch cudatoolkit ffmpeg -c pytorch -c nvidia -y
 conda activate jaison-comp-ttsc-rvc-project
 pip install -r requirements.txt
 ```
@@ -27,10 +27,6 @@ pip install -r requirements.txt
 ```
 python download_models.py
 ```
-4. Install `ffmpeg` if you haven't already. You can simply download these files and put it in this project's root:
-
-- [ffmpeg](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/ffmpeg.exe)
-- [ffprobe](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/ffprobe.exe)
 
 ### Unix
 1. Ensure you have CUDA setup properly

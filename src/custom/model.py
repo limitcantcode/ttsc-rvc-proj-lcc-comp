@@ -5,7 +5,6 @@ import sys
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 from dotenv import load_dotenv
-from scipy.io import wavfile
 
 from configs.config import Config
 from infer.modules.vc.modules import VC
@@ -44,10 +43,9 @@ class TTSCModel():
         self.vc = VC(self.config)
         self.vc.get_vc(self.model_name)
 
-    def __call__(self, input_filepath: str):
+    def __call__(self, input_filepath: str = None, audio = None):
         _, wav_opt = self.vc.vc_single(
             0,
-            input_filepath,
             self.f0up_key,
             None,
             self.f0method,
@@ -58,5 +56,7 @@ class TTSCModel():
             self.resample_sr,
             self.rms_mix_rate,
             self.protect,
+            input_audio_path=input_filepath,
+            audio=audio
         )
-        return wav_opt[1]
+        return wav_opt[1].tobytes(), wav_opt[0] # bytes, sample rate

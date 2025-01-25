@@ -146,7 +146,6 @@ class VC:
     def vc_single(
         self,
         sid,
-        input_audio_path,
         f0_up_key,
         f0_file,
         f0_method,
@@ -157,12 +156,14 @@ class VC:
         resample_sr,
         rms_mix_rate,
         protect,
+        input_audio_path = None,
+        audio = None
     ):
-        if input_audio_path is None:
+        if input_audio_path is None and audio is None:
             return "You need to upload an audio", None
         f0_up_key = int(f0_up_key)
         try:
-            audio = load_audio(input_audio_path, 16000)
+            if audio is None: audio = load_audio(input_audio_path, 16000)
             audio_max = np.abs(audio).max() / 0.95
             if audio_max > 1:
                 audio /= audio_max
