@@ -44,7 +44,7 @@ class TTSCModel():
         self.vc.get_vc(self.model_name)
 
     def __call__(self, input_filepath: str = None, audio = None):
-        _, wav_opt = self.vc.vc_single(
+        for output_arr, sr in self.vc.vc_single(
             0,
             self.f0up_key,
             None,
@@ -58,5 +58,5 @@ class TTSCModel():
             self.protect,
             input_audio_path=input_filepath,
             audio=audio
-        )
-        return wav_opt[1].tobytes(), wav_opt[0] # bytes, sample rate
+        ):
+            yield output_arr.tobytes(), sr

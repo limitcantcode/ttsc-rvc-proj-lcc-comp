@@ -371,75 +371,120 @@ class Pipeline(object):
         for t in opt_ts:
             t = t // self.window * self.window
             if if_f0 == 1:
-                audio_opt.append(
-                    self.vc(
-                        model,
-                        net_g,
-                        sid,
-                        audio_pad[s : t + self.t_pad2 + self.window],
-                        pitch[:, s // self.window : (t + self.t_pad2) // self.window],
-                        pitchf[:, s // self.window : (t + self.t_pad2) // self.window],
-                        times,
-                        index,
-                        big_npy,
-                        index_rate,
-                        version,
-                        protect,
-                    )[self.t_pad_tgt : -self.t_pad_tgt]
+                yield self._process_chunk(
+                    model,
+                    net_g,
+                    sid,
+                    audio_pad[s : t + self.t_pad2 + self.window],
+                    pitch[:, s // self.window : (t + self.t_pad2) // self.window],
+                    pitchf[:, s // self.window : (t + self.t_pad2) // self.window],
+                    times,
+                    index,
+                    big_npy,
+                    index_rate,
+                    version,
+                    protect,
+                    audio,
+                    tgt_sr,
+                    resample_sr,
+                    rms_mix_rate
                 )
             else:
-                audio_opt.append(
-                    self.vc(
-                        model,
-                        net_g,
-                        sid,
-                        audio_pad[s : t + self.t_pad2 + self.window],
-                        None,
-                        None,
-                        times,
-                        index,
-                        big_npy,
-                        index_rate,
-                        version,
-                        protect,
-                    )[self.t_pad_tgt : -self.t_pad_tgt]
+                yield self._process_chunk(
+                    model,
+                    net_g,
+                    sid,
+                    audio_pad[s : t + self.t_pad2 + self.window],
+                    None,
+                    None,
+                    times,
+                    index,
+                    big_npy,
+                    index_rate,
+                    version,
+                    protect,
+                    audio,
+                    tgt_sr,
+                    resample_sr,
+                    rms_mix_rate
                 )
             s = t
         if if_f0 == 1:
-            audio_opt.append(
-                self.vc(
-                    model,
-                    net_g,
-                    sid,
-                    audio_pad[t:],
-                    pitch[:, t // self.window :] if t is not None else pitch,
-                    pitchf[:, t // self.window :] if t is not None else pitchf,
-                    times,
-                    index,
-                    big_npy,
-                    index_rate,
-                    version,
-                    protect,
-                )[self.t_pad_tgt : -self.t_pad_tgt]
+            yield self._process_chunk(
+                model,
+                net_g,
+                sid,
+                audio_pad[t:],
+                pitch[:, t // self.window :] if t is not None else pitch,
+                pitchf[:, t // self.window :] if t is not None else pitchf,
+                times,
+                index,
+                big_npy,
+                index_rate,
+                version,
+                protect,
+                audio,
+                tgt_sr,
+                resample_sr,
+                rms_mix_rate
             )
         else:
-            audio_opt.append(
-                self.vc(
-                    model,
-                    net_g,
-                    sid,
-                    audio_pad[t:],
-                    None,
-                    None,
-                    times,
-                    index,
-                    big_npy,
-                    index_rate,
-                    version,
-                    protect,
-                )[self.t_pad_tgt : -self.t_pad_tgt]
+            yield self._process_chunk(
+                model,
+                net_g,
+                sid,
+                audio_pad[t:],
+                None,
+                None,
+                times,
+                index,
+                big_npy,
+                index_rate,
+                version,
+                protect,
+                audio,
+                tgt_sr,
+                resample_sr,
+                rms_mix_rate
             )
-        audio_opt = np.concatenate(audio_opt)
+        del pitch, pitchf, sid
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        return audio_opt
+    
+    def _process_chunk(
+        self,
+        model,
+        net_g,
+        sid,
+        audio_pad,
+        pitch,
+        pitchf,
+        times,
+        index,
+        big_npy,
+        index_rate,
+        version,
+        protect,
+        audio,
+        tgt_sr,
+        resample_sr,
+        rms_mix_rate
+    ):
+        audio_opt = self.vc(
+            model,
+            net_g,
+            sid,
+            audio_pad,
+            pitch,
+            pitchf,
+            times,
+            index,
+            big_npy,
+            index_rate,
+            version,
+            protect,
+        )[self.t_pad_tgt : -self.t_pad_tgt]
         if rms_mix_rate != 1:
             audio_opt = change_rms(audio, 16000, audio_opt, tgt_sr, rms_mix_rate)
         if tgt_sr != resample_sr >= 16000:
@@ -451,7 +496,4 @@ class Pipeline(object):
         if audio_max > 1:
             max_int16 /= audio_max
         audio_opt = (audio_opt * max_int16).astype(np.int16)
-        del pitch, pitchf, sid
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
         return audio_opt

@@ -184,8 +184,9 @@ class VC:
             elif file_index2:
                 file_index = file_index2
             else:
-                file_index = ""  # 防止小白写错，自动帮他替换掉
+                file_index = ""
 
+            sr = resample_sr if self.tgt_sr != resample_sr >= 16000 else self.tgt_sr
             audio_opt = self.pipeline.pipeline(
                 self.hubert_model,
                 self.net_g,
@@ -206,24 +207,11 @@ class VC:
                 protect,
                 f0_file,
             )
-            if self.tgt_sr != resample_sr >= 16000:
-                tgt_sr = resample_sr
-            else:
-                tgt_sr = self.tgt_sr
-            index_info = (
-                "Index:\n%s." % file_index
-                if os.path.exists(file_index)
-                else "Index not used."
-            )
-            return (
-                "Success.\n%s\nTime:\nnpy: %.2fs, f0: %.2fs, infer: %.2fs."
-                % (index_info, *times),
-                (tgt_sr, audio_opt),
-            )
-        except:
-            info = traceback.format_exc()
-            logger.warning(info)
-            return info, (None, None)
+            for audio_arr_chunk in audio_opt:
+                yield audio_arr_chunk, sr
+        except Exception as err:
+            logger.warning("Error during voice conversion", exc_info=True)
+            yield None, None
 
     def vc_multi(
         self,

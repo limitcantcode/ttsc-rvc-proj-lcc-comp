@@ -14,9 +14,7 @@ You may also simply return the final result
 import logging
 import json
 import os
-import wave
-from datetime import datetime
-import numpy as np
+from .audio import format_audio
 from .model import TTSCModel
 with open(os.path.join(os.getcwd(),"config.json")) as f:
     model_config = json.load(f)
@@ -49,21 +47,7 @@ async def request_unpacker(request_iterator):
                 raise Exception(f"Unknown request type: {type(request_o)}")
 
 def process_audio(audio_bytes, sample_rate, sample_width, channels):
-    if sample_width == 1:
-        audio_array = np.frombuffer(audio_bytes, dtype=np.int8)
-    elif sample_width == 2:
-        audio_array = np.frombuffer(audio_bytes, dtype=np.int16)
-
-    if channels == 2:
-        audio_array = (audio_array.reshape([int(audio_array.shape[0]/2), 2])/2).sum(1)
-
-    audio_array = np.interp(np.arange(0, len(audio_array), float(sample_rate)/16000), np.arange(0, len(audio_array)), audio_array)
-    audio_array = audio_array.flatten().astype(np.float32)
-
-    if sample_width == 1:
-        audio_array = audio_array / 64
-    elif sample_width == 2:
-        audio_array = audio_array / 32768
+    audio_array = format_audio(audio_bytes, sample_rate, sample_width, channels)
     audio_b, sr = ttsc_model(audio=audio_array)
 
     return audio_b, sr, sample_width, channels
@@ -77,12 +61,17 @@ async def start_ttsc(request_iterator):
     async for chunk_audio, chunk_sample_rate, chunk_sample_width, chunk_channels in request_unpacker(request_iterator): # receiving chunks of info through a stream
         audio_buffer += chunk_audio
         sample_rate, sample_width, channels = chunk_sample_rate, chunk_sample_width, chunk_channels
-        # if len(audio_buffer) > 0.25 * sample_rate * sample_width * channels:
+        # if len(audio_buffer) > 0.25 * sample_rate * sample_width * channels: # TODO figure out realtime
         #     yield process_audio(audio_buffer, sample_rate, sample_width, channels)
         #     audio_buffer = b''
         
-    if len(audio_buffer) > 0:
-        yield process_audio(audio_buffer, sample_rate, sample_width, channels)
+    # if len(audio_buffer) > 0:
+    #     yield process_audio(audio_buffer, sample_rate, sample_width, channels)
+
+    audio_array = format_audio(audio_buffer, sample_rate, sample_width, channels)
+    output_stream = ttsc_model(audio=audio_array)
+    for out_bytes, sr in output_stream:
+        yield out_bytes, sr, sample_width, channels
 
 # For speech-to-text models
 async def start_stt(request_iterator) -> str:
