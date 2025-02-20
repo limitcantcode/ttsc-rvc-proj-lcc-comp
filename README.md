@@ -17,10 +17,11 @@ The model needs to be in this projects `models` directory. Please put the folder
 
 ### Windows
 1. Ensure you have CUDA setup properly
-2. Create and activate the virtual environment. Replace the `pytorch-cuda` version with the latest version before the version stated on your CUDA (found using command `nvidia-smi`). For example, I'm using `CUDA 12.6`, but the latest `pytorch-cuda` is for `CUDA 12.4`, so use `pytorch-cuda=12.4`
+2. Create and activate the virtual environment. Find the command to install the correct pytorch packages for your system from [their website](https://pytorch.org/get-started/locally/).
 ```
-conda create -n jaison-comp-ttsc-rvc-project python=3.10 pytorch-cuda=12.4 pytorch cudatoolkit ffmpeg -c pytorch -c nvidia -y
+conda create -n jaison-comp-ttsc-rvc-project python=3.10 cudatoolkit ffmpeg -c nvidia -y
 conda activate jaison-comp-ttsc-rvc-project
+# install command for pytorch like: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 pip install -r requirements.txt
 ```
 3. Download the required assets. **Ensure you have Git LFS enabled**.
@@ -30,15 +31,20 @@ python download_models.py
 
 ### Unix
 1. Ensure you have CUDA setup properly
-2. Create and activate the virtual environment. Make sure you are using Python 3.10 (No guaruntee this will work for later versions)
+2. Create and activate the virtual environment. Make sure you are using Python 3.10 (dependencies won't work otherwise)
 ```
-python -m venv venv
+sudo apt install python3.10 python3.10-venv python3.10-dev # if you need python3.10
+python3.10 -m venv venv
 source venv/bin/activate
 ```
 3. Install the remaining dependencies. Find the command to install the correct pytorch packages for your system from [their website](https://pytorch.org/get-started/locally/).
 ```
 # install command for pytorch like: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 pip install -r requirements.txt
+```
+4. Download the required assets. **Ensure you have Git LFS enabled**.
+```
+python download_models.py
 ```
 
 ## Configuration
